@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"github.com/howeyc/fsnotify"
 	"github.com/remogatto/application"
@@ -143,21 +142,13 @@ func (l *watcherLoop) Run() {
 	}
 }
 
-func usage() {
-	fmt.Fprintf(os.Stderr, "PrettyAutoTest continously watches for changes in folder and re-run the tests\n\n")
-	fmt.Fprintf(os.Stderr, "Usage:\n\n")
-	fmt.Fprintf(os.Stderr, "\tprettyautotest [options]\n\n")
-	fmt.Fprintf(os.Stderr, "Options are:\n\n")
-	flag.PrintDefaults()
-}
-
 // Returns whether 's' matches 'pattern'
 func matches(s, pattern string) bool {
 	return regexp.MustCompile(pattern).MatchString(s)
 }
 
 func execGoTest(path string) {
-	cmd := exec.Command("go", "test")
+	cmd := exec.Command("go", append([]string{"test"}, os.Args[1:]...)...)
 	cmd.Dir = path
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -171,18 +162,11 @@ func init() {
 }
 
 func main() {
-	watchDir := flag.String("watchdir", "./", "Directory to watch for changes")
-	verbose := flag.Bool("verbose", false, "Verbose mode")
-	help := flag.Bool("help", false, "Show usage")
-	flag.Usage = usage
-	flag.Parse()
-	application.Verbose = *verbose
-	if *help {
-		usage()
-		return
-	}
-	application.Register("Watcher Loop", newWatcherLoop(*watchDir))
-	application.InstallSignalHandler(&sigterm{watchDir: *watchDir})
+	watchDir := "./"
+	verbose := false
+	application.Verbose = verbose
+	application.Register("Watcher Loop", newWatcherLoop(watchDir))
+	application.InstallSignalHandler(&sigterm{watchDir: watchDir})
 	exitCh := make(chan bool)
 	application.Run(exitCh)
 	<-exitCh

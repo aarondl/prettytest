@@ -2,7 +2,7 @@ package example
 
 import (
 	"testing"
-	"github.com/remogatto/prettytest"
+	"github.com/aarondl/prettytest"
 	"launchpad.net/gocheck"
 )
 

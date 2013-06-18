@@ -46,7 +46,7 @@ This is the skeleton of a typical prettytest test file:
 
     import (
 	"testing"
-	"github.com/remogatto/prettytest"
+	"github.com/aarondl/prettytest"
     )
 
     // Start of setup
