@@ -147,14 +147,33 @@ func matches(s, pattern string) bool {
 	return regexp.MustCompile(pattern).MatchString(s)
 }
 
+var runMutex = sync.Mutex{}
+var running = false
+
 func execGoTest(path string) {
-	cmd := exec.Command("go", append([]string{"test"}, os.Args[1:]...)...)
-	cmd.Dir = path
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Println(err)
+	runMutex.Lock()
+	isRunning := running
+	runMutex.Unlock()
+	if isRunning {
+		if application.Verbose {
+			application.Logf("Aborting run, tests not finished running.")
+		}
+		return
 	}
-	fmt.Print(string(out))
+
+	go func() {
+		cmd := exec.Command("go", append([]string{"test"}, os.Args[1:]...)...)
+		cmd.Dir = path
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Println(err)
+		}
+		fmt.Print(string(out))
+
+		runMutex.Lock()
+		running = false
+		runMutex.Unlock()
+	}()
 }
 
 func init() {
